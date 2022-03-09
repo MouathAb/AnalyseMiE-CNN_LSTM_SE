@@ -527,34 +527,35 @@ for i in reversed(range(len(label_s))):
 ################################################## 
 ##################################################
 ##################################################
-    
+m = 9 # the number of patches; should be in [4,9,16]
+fold_sf = 'SF_'+m+'Patches'
 Data_url = Data_url_casmeii + Data_url_samm 
 leel = []
 for i in range(6):
     leel += [leel_c[i] + leel_s[i]]
 #leel = [leel_c[0] + leel_s[0]] + [leel_c[1] + leel_c[1]] + [leel_s[2] + leel_c[2]] + [leel_s[3] + leel_c[3]] + [leel_s[4] + leel_c[4]] + [leel_s[5] + leel_c[5]]
 print('GET Spatial Features ...')
-Data_x0_s = pd.read_csv('_5_clases_test_16P_region_0.csv',header=None)
+Data_x0_s = pd.read_csv(fold_sf+'_5_clases_test_'+m+'P_region_0.csv',header=None)
 Data_0_s = np.array(Data_x0_s.values.tolist())
 Data_S0 = sequenced(Data_0_s,leel[0],Data_url,0)
 
-Data_x1_s = pd.read_csv('_5_clases_test_16P_region_1.csv',header=None)
+Data_x1_s = pd.read_csv(fold_sf+'_5_clases_test_'+m+'P_region_1.csv',header=None)
 Data_1_s = np.array(Data_x1_s.values.tolist())
 Data_S1 = sequenced(Data_1_s,leel[1],Data_url,1)
 
-Data_x2_s = pd.read_csv('_5_clases_test_16P_region_2.csv',header=None)
+Data_x2_s = pd.read_csv(fold_sf+'_5_clases_test_'+m+'P_region_2.csv',header=None)
 Data_2_s = np.array(Data_x2_s.values.tolist())
 Data_S2 = sequenced(Data_2_s,leel[2],Data_url,2)
 
-Data_x3_s = pd.read_csv('_5_clases_test_16P_region_3.csv',header=None)
+Data_x3_s = pd.read_csv(fold_sf+'_5_clases_test_'+m+'P_region_3.csv',header=None)
 Data_3_s = np.array(Data_x3_s.values.tolist())
 Data_S3 = sequenced(Data_3_s,leel[3], Data_url,3)
 
-Data_x4_s = pd.read_csv('_5_clases_test_16P_region_4.csv',header=None)
+Data_x4_s = pd.read_csv(fold_sf+'_5_clases_test_'+m+'P_region_4.csv',header=None)
 Data_4_s = np.array(Data_x4_s.values.tolist())
 Data_S4 = sequenced(Data_4_s,leel[4],Data_url,4)
 
-Data_x5_s = pd.read_csv('_5_clases_test_16P_region_5.csv',header=None)
+Data_x5_s = pd.read_csv(fold_sf+'_5_clases_test_'+m+'P_region_5.csv',header=None)
 Data_5_s = np.array(Data_x5_s.values.tolist())
 Data_S5 = sequenced(Data_5_s,leel[5],Data_url,5)
 
