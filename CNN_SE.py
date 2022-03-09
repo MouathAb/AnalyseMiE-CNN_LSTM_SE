@@ -239,7 +239,7 @@ def prepare_for_training(ds, cache=True, shuffle_buffer_size=400, s=True):
         ds = ds.batch(BATCH_SIZE)
         ds = ds.prefetch(buffer_size=AUTOTUNE)
         return ds
-def train_all(Re,labelnnz,Data_urlz,y_train,x_train):
+def train_all(Re,labelnnz,Data_urlz,y_train,x_train,m):
     labelnn_v2_train = y_train
     labelnn_v2_test= labelnnz
     class_num = len(np.unique(labelnn_v2_train))
@@ -273,7 +273,7 @@ def train_all(Re,labelnnz,Data_urlz,y_train,x_train):
     cnn =[]
     inputCNN = []
 
-    for R in range(16):
+    for R in range(m):
         inputCNN += [Input(shape=(IWG_WIDTH,IMG_HEIGHT,3))]
                 
 #                CNN = Conv2D(16, (1, 1) , activation='relu',padding='same',kernel_initializer=RandomNormal(stddev=0.1),bias_initializer='zeros')(inputCNN[R])
@@ -300,8 +300,7 @@ def train_all(Re,labelnnz,Data_urlz,y_train,x_train):
 
         cnn += [concat]
 
-    conc = concatenate([cnn[0],cnn[1],cnn[2],cnn[3],cnn[4],cnn[5],cnn[6],cnn[7],cnn[8],
-                        cnn[9],cnn[10],cnn[11],cnn[12],cnn[13],cnn[14],cnn[15]])
+    conc = concatenate([cnn[_] for _ in range(m)])
 
     feat = int(conc.shape[3])
     alpha = int(feat/4)
@@ -378,7 +377,7 @@ def train_all(Re,labelnnz,Data_urlz,y_train,x_train):
     del modell , test_ds
     gc.collect()
     print('save features ...')
-    with open('_5_clases_test_16P_region_'+str(Re)+".csv", "w") as output:
+    with open('_5_clases_test_'+m+'P_region_'+str(Re)+".csv", "w") as output:
         writer = csv.writer(output)
         writer.writerows(pred_y)
     output.close
@@ -459,18 +458,34 @@ def fix_label (k, labeln_):
             if labelnn_s[R][i] == 7:
                 labelnn_s[R][i]=5
     return labelnn_s,  ooo_s, leel_s
+
+def adjust_sizes(Data_url,lel,sizes):
+
+    Data=[]
+    for R in range(6):
+        Datas =[]
+        for j,x in enumerate(Data_url):
+            if lel[R][j] not in [5,6]:
+                Datas += [x[R]]
+        print(len(Datas))
+        Data+=[Datas]
+        
+    return Data
+
 # =============================================================================
 #                            ~ start here ~ 
 # =============================================================================
 print("get Image url DATA ...")  
-Data_urlx_samm = pd.read_csv('/mnt/DONNEES/Bureau/analyse-ME-DL/Data_url_SAMM.csv',header=None)
+samm_url = '/mnt/DONNEES/Bureau/analyse-ME-DL/'
+Data_urlx_samm = pd.read_csv(samm_url+'Data_url_SAMM.csv',header=None)
 Data_url_samm = Data_urlx_samm.values.tolist()   
+# correct url file 
 for i in range(len(Data_url_samm)):
     for j in range(6):
         Data_url_samm[i][j] = Data_url_samm[i][j][:6]+'amouath/Bureau'+Data_url_samm[i][j][14:] 
         
-        
-Data_urlx_casmeii_ = pd.read_csv('/mnt/DONNEES/Bureau/analyse-ME-DL/Data_url_CASMEII.csv',header=None)
+casmeii_url = '/mnt/DONNEES/Bureau/analyse-ME-DL/'
+Data_urlx_casmeii_ = pd.read_csv(casmeii_url+'Data_url_CASMEII.csv',header=None)
 Data_url_casmeii_ = Data_urlx_casmeii_.values.tolist()   
 for i in range(len(Data_url_casmeii_)):
     for j in range(6):
@@ -485,15 +500,21 @@ for i in range(len(Data_url_casmeii_)):
     if len(Data_url_casmeii0) != 0:
         Data_url_casmeii.append(Data_url_casmeii0)
         
-print("get Label's SAMM (AU) from source ...")   
-File_name_s = "/mnt/DONNEES/Bureau/SAMM/SAMM_Micro_FACS_Codes_v2.xlsx"
+print("get Label's SAMM (AU) from source ...")  
+label_samm = "/mnt/DONNEES/Bureau/SAMM/" 
+File_name_s = label_samm + "SAMM_Micro_FACS_Codes_v2.xlsx"
 label_s,b_s,a_s,c_s = GET_Label(File_name_s)
 labeln_s = arrange_label(label_s,File_name_s)
 
 print("get Label's CASMEII (AU) from source ...")   
-File_name_c = '/mnt/DONNEES/download/CASME2-coding-20190701.xlsx'
+label_casmeii = '/mnt/DONNEES/download/'
+File_name_c = label_casmeii+'CASME2-coding-20190701.xlsx'
 label_c,b_c,a_c,c_c = GET_Label(File_name_c)
 labeln_c = arrange_label(label_c,File_name_c)
+
+# Create a "subject" list that contains a "sequence" list 
+
+# For SAMM 
 c_s=0
 k_s=[]
 b_s=[]
@@ -516,7 +537,7 @@ for d  in Data_url_samm:
     c_s += 1
 
 k_s += [c_s]
-
+#For CASMEII
 c_c=0
 k_c=[]
 b_c=[]
@@ -540,20 +561,11 @@ for d  in Data_url_casmeii:
 
 k_c += [c_c]
 
+# Convert label by sequence to label by frame 
 labelnn_s,  ooo_s, leel_s = fix_label(k_s, labeln_s)
 labelnn_c,  ooo_c, leel_c = fix_label(k_c, labeln_c)
-def adjust_sizes(Data_url,lel,sizes):
 
-    Data=[]
-    for R in range(6):
-        Datas =[]
-        for j,x in enumerate(Data_url):
-            if lel[R][j] not in [5,6]:
-                Datas += [x[R]]
-        print(len(Datas))
-        Data+=[Datas]
-        
-    return Data
+# Get the size of each region
 sizes = []
 for R in range(6):
     url_0 = '/mnt/DONNEES' + Data_url_casmeii[0][R][13:]
@@ -561,9 +573,11 @@ for R in range(6):
     f_0_w,f_0_h=f_0.size
     sizes.append([f_0_h,f_0_w])
 
+# Adjust the size of the images 
 Data_s = adjust_sizes(Data_url_samm,leel_s,sizes)
 Data_c = adjust_sizes(Data_url_casmeii,leel_c,sizes)
 
+# Mix the CASMEII and the SAMM data and labels
 Data_url =  np.concatenate((Data_c,Data_s),axis=1)
 labelnn = np.concatenate((labelnn_c,labelnn_s),axis=1)
 AUTOTUNE = tf.data.experimental.AUTOTUNE
@@ -583,10 +597,13 @@ ti = 0
 #Epochs = [48,48,48,48,48,48] 10249;24
 
 # =============================================================================
+# Correct the url of data
+# if your data is in ddifferent place you may change it here
 for _ in range(6):
     for url in range(len(Data_url[_])):
         Data_url[_,url] = '/mnt/DONNEES/' + Data_url[_,url][13:]
 
+# Split data
 Data_url1 = np.transpose(Data_url)
 labelnn1 = np.transpose(labelnn)
 x_train,x_test,y_train,y_test = split(Data_url1,labelnn1,test_size=0.5, random_state=42)
@@ -595,6 +612,9 @@ x_train = np.transpose(x_train)
 y_train = np.transpose(y_train)
 
 #    class_weights = compute_class_weight('balanced',np.unique(labelnnz),labelnnz)
+
+# train ~ Valid ~ save features
+m = 9 #the number of patches
 for Re in range(6):
     if not os.path.exists('_5_clases_test_16P_region_'+str(Re)+".csv"):
         print('#'*25);print("region : "+str(Re));print("#"*25)
@@ -604,12 +624,12 @@ for Re in range(6):
             size = Image.open('/mnt/DONNEES' +i[Re][13:]).size
             si00 += size[0] 
             si10 += size[1]
-        si0 = int(si00/len(Data_url))
-        si1 = int(si10/len(Data_url))
+        si0 = int(si00/len(Data_url)) # mean width
+        si1 = int(si10/len(Data_url)) # mean hight
         print(si0,si1)
         IWG_WIDTH = int(si0/2)
         IMG_HEIGHT = int(si1/2)
-        train_all(Re,labelnn[Re],Data_url[Re],y_train[Re],x_train[Re])
+        train_all(Re,labelnn[Re],Data_url[Re],y_train[Re],x_train[Re],m)
         gc.collect()
 
 
